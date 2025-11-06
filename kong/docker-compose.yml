@@ -1,0 +1,51 @@
+services:
+  # Kong Gateway - Chạy riêng cho môi trường dev
+  kong:
+    image: kong:latest
+    container_name: p2a-kong
+    restart: unless-stopped
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /kong/kong.yml
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:9081
+      KONG_ADMIN_GUI_URL: http://localhost:9082
+      KONG_ADMIN_GUI_LISTEN: 0.0.0.0:9082
+      KONG_PROXY_LISTEN: 0.0.0.0:9080
+      KONG_ADMIN_LISTEN_SSL: 0.0.0.0:8444
+      KONG_PROXY_LISTEN_SSL: 0.0.0.0:8443
+      # Kong sẽ kết nối đến các services qua host.docker.internal
+      KONG_DNS_RESOLVER: "8.8.8.8"
+    ports:
+      - "9080:9080"   # Kong Proxy
+      - "9081:9081"   # Kong Admin API
+      - "9082:9082"   # Kong Manager
+      - "9083:9083"   # Kong Proxy SSL
+      - "9084:9084"   # Kong Admin SSL
+    volumes:
+      - ./kong.yml:/kong/kong.yml:ro
+      - ./kong-logs:/var/log/kong
+    networks:
+      - p2a-asean-network
+    healthcheck:
+      test: ["CMD", "kong", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # Kong Database không cần thiết vì sử dụng declarative config
+  # Tất cả cấu hình đã được định nghĩa trong kong.yml
+
+# Không cần volumes vì không sử dụng database
+
+networks:
+  p2a-asean-network:
+    name: p2a-asean-network
+    driver: bridge
+    # IPAM tự động - Docker sẽ assign IP range

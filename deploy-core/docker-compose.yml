@@ -1,0 +1,16 @@
+services:
+  # P2A Core System Application (prepares for docker compose pull)
+  p2a-core-system:
+    image: ghcr.io/williamsmiths/p2a-core-system:v1.0.4
+    pull_policy: always
+    container_name: p2a-core-system
+    restart: always
+    networks:
+      - p2a-asean-network
+
+networks:
+  p2a-asean-network:
+    name: p2a-asean-network
+    external: true
+
+
