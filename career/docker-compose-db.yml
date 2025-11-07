@@ -37,7 +37,7 @@ services:
     ports:
       - "5535:5432"
     depends_on:
-      - master
+      - postgres-career-master
     networks:
       - p2a-asean-network
     command: ["sh", "/usr/local/bin/entrypoint.sh"]
