@@ -26,35 +26,10 @@ services:
           - OPTIONS
         strip_path: false
     plugins:
-      - name: cors
-        config:
-          origins:
-            - "*"
-          methods:
-            - GET
-            - POST
-            - PUT
-            - PATCH
-            - DELETE
-            - OPTIONS
-          headers:
-            - Accept
-            - Accept-Version
-            - Content-Length
-            - Content-MD5
-            - Content-Type
-            - Date
-            - X-Auth-Token
-            - Authorization
-          exposed_headers:
-            - X-Auth-Token
-          credentials: false
-          max_age: 3600
-          preflight_continue: false
       - name: rate-limiting
         config:
-          minute: 100
-          hour: 1000
+          minute: 500
+          hour: 10000
           policy: local
 
   # Career Module Service
@@ -64,6 +39,7 @@ services:
       - name: career-routes
         paths:
           - /api/career
+          - /api/career/health
         methods:
           - GET
           - POST
@@ -73,35 +49,10 @@ services:
           - OPTIONS
         strip_path: false
     plugins:
-      - name: cors
-        config:
-          origins:
-            - "*"
-          methods:
-            - GET
-            - POST
-            - PUT
-            - PATCH
-            - DELETE
-            - OPTIONS
-          headers:
-            - Accept
-            - Accept-Version
-            - Content-Length
-            - Content-MD5
-            - Content-Type
-            - Date
-            - X-Auth-Token
-            - Authorization
-          exposed_headers:
-            - X-Auth-Token
-          credentials: false
-          max_age: 3600
-          preflight_continue: false
       - name: rate-limiting
         config:
-          minute: 100
-          hour: 1000
+          minute: 500
+          hour: 10000
           policy: local
 
   # Education Module Service
@@ -120,40 +71,15 @@ services:
           - OPTIONS
         strip_path: false
     plugins:
-      - name: cors
-        config:
-          origins:
-            - "*"
-          methods:
-            - GET
-            - POST
-            - PUT
-            - PATCH
-            - DELETE
-            - OPTIONS
-          headers:
-            - Accept
-            - Accept-Version
-            - Content-Length
-            - Content-MD5
-            - Content-Type
-            - Date
-            - X-Auth-Token
-            - Authorization
-          exposed_headers:
-            - X-Auth-Token
-          credentials: false
-          max_age: 3600
-          preflight_continue: false
       - name: rate-limiting
         config:
-          minute: 100
-          hour: 1000
+          minute: 500
+          hour: 10000
           policy: local
 
   # Research Module Service
   - name: p2a-research
-    url: http://host.docker.internal:3003
+    url: http://10.220.19.210:3003
     routes:
       - name: research-routes
         paths:
@@ -167,40 +93,15 @@ services:
           - OPTIONS
         strip_path: false
     plugins:
-      - name: cors
-        config:
-          origins:
-            - "*"
-          methods:
-            - GET
-            - POST
-            - PUT
-            - PATCH
-            - DELETE
-            - OPTIONS
-          headers:
-            - Accept
-            - Accept-Version
-            - Content-Length
-            - Content-MD5
-            - Content-Type
-            - Date
-            - X-Auth-Token
-            - Authorization
-          exposed_headers:
-            - X-Auth-Token
-          credentials: false
-          max_age: 3600
-          preflight_continue: false
       - name: rate-limiting
         config:
-          minute: 100
-          hour: 1000
+          minute: 500
+          hour: 10000
           policy: local
 
   # Business Module Service
   - name: p2a-business
-    url: http://host.docker.internal:3004
+    url: http://10.220.19.17:3004
     routes:
       - name: business-routes
         paths:
@@ -214,35 +115,50 @@ services:
           - OPTIONS
         strip_path: false
     plugins:
-      - name: cors
-        config:
-          origins:
-            - "*"
-          methods:
-            - GET
-            - POST
-            - PUT
-            - PATCH
-            - DELETE
-            - OPTIONS
-          headers:
-            - Accept
-            - Accept-Version
-            - Content-Length
-            - Content-MD5
-            - Content-Type
-            - Date
-            - X-Auth-Token
-            - Authorization
-          exposed_headers:
-            - X-Auth-Token
-          credentials: false
-          max_age: 3600
-          preflight_continue: false
       - name: rate-limiting
         config:
           minute: 100
-          hour: 1000
+          hour: 10000
           policy: local
 
-## Global plugins đã gỡ vì không dùng
+# Global CORS Plugin - Áp dụng cho tất cả services
+plugins:
+  - name: cors
+    config:
+      origins:
+        # Danh sách các origin được phép truy cập
+        - "http://10.220.19.82:8386"
+        - "http://10.220.19.125:8386"
+        - "http://10.220.19.210:8386"
+        - "http://10.220.19.73:8386"
+        - "http://localhost:8386"
+        # Các origin khác nếu cần
+        - "http://10.220.19.17:9000"
+        - "http://10.220.19.17:3001"
+        - "http://10.220.19.17:50051"
+        - "http://10.220.19.17:3000"
+        - "http://10.220.19.210:3001"
+        - "http://localhost:3001"
+      methods:
+        - GET
+        - POST
+        - PUT
+        - PATCH
+        - DELETE
+        - OPTIONS
+      headers:
+        - Accept
+        - Accept-Version
+        - Content-Length
+        - Content-MD5
+        - Content-Type
+        - Date
+        - X-Auth-Token
+        - Authorization
+        - Origin
+      exposed_headers:
+        - X-Auth-Token
+        - Set-Cookie
+      credentials: true
+      max_age: 3600
+      preflight_continue: false
