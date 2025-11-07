@@ -1,14 +1,32 @@
 services:
-  # P2A Core System Application (prepares for docker compose pull)
+  # P2A Core System Application
   p2a-core-system:
     image: ghcr.io/williamsmiths/p2a-core-system:v1.0.6
-    pull_policy: always
     container_name: p2a-core-system
     restart: always
+    env_file:
+      - .env
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data/uploads:/app/uploads
+      - ./data/logs:/app/logs
     networks:
       - p2a-asean-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  uploads_data:
+    driver: local
 
 networks:
   p2a-asean-network:
     name: p2a-asean-network
     external: true
+
+
