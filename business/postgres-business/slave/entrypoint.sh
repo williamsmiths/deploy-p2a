@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-MASTER_HOST="postgres-core-master"
+MASTER_HOST="postgres-business-master"
 MASTER_PORT="5432"
 REPL_USER="replicator"
 REPL_PASSWORD="Kx9mP2A2024Replicator7nQ8vR3s"
@@ -20,3 +20,5 @@ gosu postgres pg_basebackup -h "$MASTER_HOST" -p "$MASTER_PORT" -U "$REPL_USER" 
 
 echo "[slave] start postgres"
 exec docker-entrypoint.sh postgres -c config_file=/etc/postgresql/postgresql.conf
+
+

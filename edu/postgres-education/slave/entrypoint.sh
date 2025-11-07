@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-MASTER_HOST="postgres-core-master"
+MASTER_HOST="postgres-education-master"
 MASTER_PORT="5432"
 REPL_USER="replicator"
 REPL_PASSWORD="Kx9mP2A2024Replicator7nQ8vR3s"

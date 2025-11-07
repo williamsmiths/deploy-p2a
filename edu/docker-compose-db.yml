@@ -1,0 +1,100 @@
+services:
+  # PostgreSQL Master Database for Education Module
+  master:
+    image: postgres:16
+    container_name: postgres-education-master
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_MASTER_DATABASE:-p2a_education}
+      POSTGRES_USER: ${DB_MASTER_USERNAME:-p2a_user}
+      POSTGRES_PASSWORD: ${DB_MASTER_PASSWORD:-Kx9mP2A2024MasterDB7nQ8vR3s}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+      PGDATA: /var/lib/postgresql/data/pgdata
+      # Replication settings
+      POSTGRES_REPLICATION_USER: replicator
+      POSTGRES_REPLICATION_PASSWORD: Kx9mP2A2024Replicator7nQ8vR3s
+    ports:
+      - "5538:5432"
+    volumes:
+      - pg_master_education_data:/var/lib/postgresql/data
+      - ./postgres-education/master/conf/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgres-education/master/conf/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./postgres-education/master/conf/init-replication.sql:/docker-entrypoint-initdb.d/02-init-replication.sql:ro
+    command: >
+      postgres
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c hba_file=/etc/postgresql/pg_hba.conf
+    networks:
+      - p2a-asean-network
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${DB_MASTER_USERNAME:-p2a_user} -d ${DB_MASTER_DATABASE:-p2a_education}",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # PostgreSQL Slave (Read Replica - Streaming Replication)
+  slave:
+    image: postgres:16
+    container_name: postgres-education-slave
+    restart: always
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${DB_MASTER_USERNAME:-p2a_user}
+      POSTGRES_PASSWORD: ${DB_MASTER_PASSWORD:-Kx9mP2A2024MasterDB7nQ8vR3s}
+      POSTGRES_DB: ${DB_MASTER_DATABASE:-p2a_education}
+    ports:
+      - "5539:5432"
+    volumes:
+      - pg_slave_education_data:/var/lib/postgresql/data
+      - ./postgres-education/slave/conf/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgres-education/slave/entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+    depends_on:
+      - master
+    networks:
+      - p2a-asean-network
+    command: ["sh", "/usr/local/bin/entrypoint.sh"]
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -h postgres-education-master -p 5432 -U ${DB_MASTER_USERNAME:-p2a_user} || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  redis-education:
+    image: redis:latest
+    container_name: redis-education
+    restart: unless-stopped
+    ports:
+      - "6378:6379"
+    networks:
+      - p2a-asean-network
+    volumes:
+      - redis_education_data:/data
+    environment:
+      - REDIS_PASSWORD:${REDIS_PASSWORD:-redis}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis}
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  pg_master_education_data:
+  pg_slave_education_data:
+  redis_education_data:
+    driver: local
+
+networks:
+  p2a-asean-network:
+    name: p2a-asean-network
+    external: true

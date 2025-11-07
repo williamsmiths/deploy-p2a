@@ -1,0 +1,96 @@
+services:
+  # PostgreSQL Master (Main DB)
+  master:
+    image: postgres:16
+    container_name: postgres-research-master
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_MASTER_DATABASE:-p2a_research}
+      POSTGRES_USER: ${DB_MASTER_USERNAME:-p2a_user}
+      POSTGRES_PASSWORD: ${DB_MASTER_PASSWORD:-p2a_research_password}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+      PGDATA: /var/lib/postgresql/data/pgdata
+      # Replication settings
+      POSTGRES_REPLICATION_USER: replicator
+      POSTGRES_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-p2a_research_replicator}
+    ports:
+      - "5632:5432"
+    volumes:
+      - pg_master_data:/var/lib/postgresql/data
+      - ./postgres-research/master/conf/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgres-research/master/conf/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./postgres-research/master/conf/init-replication.sql:/docker-entrypoint-initdb.d/02-init-replication.sql:ro
+    command: >
+      postgres
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c hba_file=/etc/postgresql/pg_hba.conf
+    networks:
+      - p2a-asean-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_MASTER_USERNAME:-p2a_user} -d ${DB_MASTER_DATABASE:-p2a_research}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # PostgreSQL Slave (Read Replica - Streaming Replication)
+  slave:
+    image: postgres:16
+    container_name: postgres-research-slave
+    restart: always
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${DB_MASTER_USERNAME:-p2a_user}
+      POSTGRES_PASSWORD: ${DB_MASTER_PASSWORD:-p2a_research_password}
+      POSTGRES_DB: ${DB_MASTER_DATABASE:-p2a_research}
+      POSTGRES_REPLICATION_PASSWORD: ${POSTGRES_REPLICATION_PASSWORD:-p2a_research_replicator}
+      POSTGRES_REPLICATION_USER: replicator
+    ports:
+      - "5633:5432"
+    volumes:
+      - pg_slave_data:/var/lib/postgresql/data
+      - ./postgres-research/slave/conf/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgres-research/slave/entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+    depends_on:
+      - master
+    networks:
+      - p2a-asean-network
+    command: ["sh", "/usr/local/bin/entrypoint.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h postgres-research-master -p 5432 -U ${DB_MASTER_USERNAME:-p2a_user} || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  # Redis
+  redis:
+    image: redis:latest
+    container_name: redis-research
+    restart: unless-stopped
+    ports:
+      - "6444:6379"
+    networks:
+      - p2a-asean-network
+    volumes:
+      - redis_research_data:/data
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-redis}
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  pg_master_data:
+  pg_slave_data:
+  redis_research_data:
+
+networks:
+  p2a-asean-network:
+    name: p2a-asean-network
+    external: true
+
+
