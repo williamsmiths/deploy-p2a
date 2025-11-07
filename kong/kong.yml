@@ -34,7 +34,7 @@ services:
 
   # Career Module Service
   - name: p2a-career
-    url: http://10.220.19.17:3001
+    url: http://host.docker.internal:3001
     routes:
       - name: career-routes
         paths:
@@ -79,7 +79,7 @@ services:
 
   # Research Module Service
   - name: p2a-research
-    url: http://10.220.19.210:3003
+    url: http://host.docker.internal:3003
     routes:
       - name: research-routes
         paths:
@@ -101,7 +101,7 @@ services:
 
   # Business Module Service
   - name: p2a-business
-    url: http://10.220.19.17:3004
+    url: http://host.docker.internal:3004
     routes:
       - name: business-routes
         paths:
