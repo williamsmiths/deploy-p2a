@@ -68,26 +68,6 @@ services:
       retries: 5
       start_period: 60s
 
-  redis-business:
-    image: redis:latest
-    container_name: redis-business
-    restart: unless-stopped
-    ports:
-      - "6375:6379"
-    networks:
-      - p2a-asean-network
-    volumes:
-      - redis_business_data:/data
-    environment:
-      - REDIS_PASSWORD:${REDIS_PASSWORD:-redis}
-    command: redis-server --requirepass ${REDIS_PASSWORD:-redis}
-    healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
-
 volumes:
   pg_master_business_data:
   pg_slave_business_data:
