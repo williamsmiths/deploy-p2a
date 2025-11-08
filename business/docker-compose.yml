@@ -1,8 +1,8 @@
 services:
-  # P2A Core System Application
-  p2a-core-system:
-    image: ghcr.io/williamsmiths/p2a-core-system:v1.0.6
-    container_name: p2a-core-system
+  # P2A business System Application
+  p2a-business-system:
+    image: ghcr.io/williamsmiths/p2a-business:v1.0.2
+    container_name: p2a-business-system
     restart: always
     env_file:
       - .env
@@ -13,12 +13,6 @@ services:
       - ./data/logs:/app/logs
     networks:
       - p2a-asean-network
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
 
 volumes:
   uploads_data:
