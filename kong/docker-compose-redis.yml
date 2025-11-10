@@ -1,0 +1,29 @@
+services:
+  redis:
+    image: redis:latest
+    container_name: p2a-redis
+    restart: unless-stopped
+    ports:
+      - "6479:6379"
+    networks:
+      - p2a-asean-network
+    volumes:
+      - redis_p2a_data:/data
+    environment:
+      - REDIS_PASSWORD:redis
+    command: redis-server --requirepass redis
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "redis", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+volumes:
+  redis_p2a_data:
+    driver: local
+
+networks:
+  p2a-asean-network:
+    name: p2a-asean-network
+    external: true

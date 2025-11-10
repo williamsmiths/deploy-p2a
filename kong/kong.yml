@@ -61,6 +61,7 @@ services:
     routes:
       - name: education-routes
         paths:
+          - /assets
           - /api/education
         methods:
           - GET
