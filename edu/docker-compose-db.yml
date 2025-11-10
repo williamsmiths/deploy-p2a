@@ -72,8 +72,6 @@ services:
 volumes:
   pg_master_education_data:
   pg_slave_education_data:
-  redis_education_data:
-    driver: local
 
 networks:
   p2a-asean-network:

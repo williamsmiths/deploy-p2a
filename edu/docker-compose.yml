@@ -1,7 +1,7 @@
 services:
   # P2A Core System Application
   p2a-education-system:
-    image: ghcr.io/williamsmiths/p2a-education:v1.0.3
+    image: ghcr.io/williamsmiths/p2a-education:v1.0.6
     container_name: p2a-education-system
     restart: always
     env_file:
