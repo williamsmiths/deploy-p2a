@@ -11,6 +11,7 @@ services:
     routes:
       - name: core-system-routes
         paths:
+          - /assets
           - /api/core
           - /api/auth
           - /api/users
@@ -38,6 +39,7 @@ services:
     routes:
       - name: career-routes
         paths:
+          - /assets/career
           - /api/career
           - /api/career/health
         methods:
@@ -61,7 +63,7 @@ services:
     routes:
       - name: education-routes
         paths:
-          - /assets
+          - /assets/education
           - /api/education
         methods:
           - GET
@@ -84,6 +86,7 @@ services:
     routes:
       - name: research-routes
         paths:
+          - /assets/research
           - /api/research
         methods:
           - GET
@@ -106,6 +109,7 @@ services:
     routes:
       - name: business-routes
         paths:
+          - /assets/business
           - /api/business
         methods:
           - GET
@@ -122,6 +126,28 @@ services:
           hour: 10000
           policy: local
 
+  # Detech Module Service
+  - name: p2a-detech-cv
+    url: http://10.220.19.17:3005
+    routes:
+      - name: detech-cv-routes
+        paths:
+          - /assets/detech
+          - /api/detech
+        methods:
+          - GET
+          - POST
+          - PUT
+          - PATCH
+          - DELETE
+          - OPTIONS
+        strip_path: false
+    plugins:
+      - name: rate-limiting
+        config:
+          minute: 100
+          hour: 10000
+          policy: local
 # Global CORS Plugin - Áp dụng cho tất cả services
 plugins:
   - name: cors
@@ -133,12 +159,15 @@ plugins:
         - "http://10.220.19.210:8386"
         - "http://10.220.19.73:8386"
         - "http://localhost:8386"
+        - "https://universe.duytan.edu.vn"
         # Các origin khác nếu cần
-        - "http://10.220.19.17:9000"
-        - "http://10.220.19.17:3001"
-        - "http://10.220.19.17:50051"
-        - "http://10.220.19.17:3000"
-        - "http://10.220.19.210:3001"
+        - "https://p2a-duytan.vercel.app"
+        - "http://10.80.80.52:1443"
+        - "http://10.80.80.52:3001"
+        - "http://10.80.80.52:50052"
+        - "http://10.80.80.52:50051"
+        - "http://10.80.80.52:3000"
+        - "http://10.80.80.52:3001"
         - "http://localhost:3001"
       methods:
         - GET

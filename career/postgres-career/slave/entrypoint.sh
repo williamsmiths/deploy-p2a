@@ -1,31 +1,22 @@
 #!/bin/sh
 set -e
 
-# If running as root, fix permissions then re-exec as 'postgres'
-if [ "$(id -u)" = "0" ]; then
-  # Best-effort fix ownership and mode for data dir
-  chown -R 999:999 /var/lib/postgresql/data 2>/dev/null || true
-  chmod 0700 /var/lib/postgresql/data 2>/dev/null || true
-  exec gosu postgres sh "$0" "$@"
-fi
+MASTER_HOST="postgres-career-master"
+MASTER_PORT="5432"
+REPL_USER="replicator"
+REPL_PASSWORD="Kx9mP2A2024Replicator7nQ8vR3s"
 
-# Ensure password is available for psql/pg_basebackup
-export PGPASSWORD="${POSTGRES_PASSWORD}"
-
-# Wait until master is ready
-until pg_isready -h master -p 5432 -U "${POSTGRES_USER}"; do
-  echo "Waiting for master to be ready..."
-  sleep 1
+echo "[slave] waiting for master ${MASTER_HOST}:${MASTER_PORT}..."
+until pg_isready -h "$MASTER_HOST" -p "$MASTER_PORT" -U "$REPL_USER" >/dev/null 2>&1; do
+  sleep 2
 done
 
-# Initial base backup if data directory is empty
-if [ -z "$(ls -A /var/lib/postgresql/data/pgdata 2>/dev/null)" ]; then
-  echo "Starting initial base backup..."
-  rm -rf /var/lib/postgresql/data/*
-  pg_basebackup -h master -p 5432 -D /var/lib/postgresql/data/pgdata -U "${POSTGRES_USER}" -v -P -R -X stream -C -S replica1
-fi
+echo "[slave] cleaning PGDATA and syncing base backup"
+rm -rf "$PGDATA"/*
 
-# Ensure strict directory permissions (required by PostgreSQL)
-chmod 0700 /var/lib/postgresql/data/pgdata 2>/dev/null || true
+echo "[slave] running basebackup as postgres"
+export PGPASSWORD="$REPL_PASSWORD"
+gosu postgres pg_basebackup -h "$MASTER_HOST" -p "$MASTER_PORT" -U "$REPL_USER" -D "$PGDATA" -Fp -Xs -P -R
 
-exec postgres -c config_file=/etc/postgresql/postgresql.conf
+echo "[slave] start postgres"
+exec docker-entrypoint.sh postgres -c config_file=/etc/postgresql/postgresql.conf

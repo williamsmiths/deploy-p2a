@@ -1,55 +1,70 @@
 services:
+  # PostgreSQL Master (Main DB)
   master:
-    container_name: postgres-career-master
     image: postgres:16
+    container_name: postgres-career-master
     restart: always
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-p2a_career_user}
-      POSTGRES_PASSWORD: ${DB_MASTER_PASSWORD:-P2aCareer!2025}
       POSTGRES_DB: ${DB_MASTER_DATABASE:-p2a_career}
+      POSTGRES_USER: ${DB_MASTER_USERNAME:-p2a_career_user}
+      POSTGRES_PASSWORD: ${DB_MASTER_PASSWORD:-Kx9mP2A2024MasterDB7nQ8vR3s}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
       PGDATA: /var/lib/postgresql/data/pgdata
+      # Replication settings
+      POSTGRES_REPLICATION_USER: replicator
+      POSTGRES_REPLICATION_PASSWORD: Kx9mP2A2024Replicator7nQ8vR3s
+    # ports:
+    #   - "5534:5432"
     volumes:
       - pg_master_data:/var/lib/postgresql/data
       - ./postgres-career/master/conf/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ./postgres-career/master/conf/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+      - ./postgres-career/master/conf/init-replication.sql:/docker-entrypoint-initdb.d/02-init-replication.sql:ro
     command: >
       postgres
       -c config_file=/etc/postgresql/postgresql.conf
       -c hba_file=/etc/postgresql/pg_hba.conf
-    ports:
-      - "5534:5432"
     networks:
       - p2a-asean-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_MASTER_USERNAME:-p2a_career_user} -d ${DB_MASTER_DATABASE:-p2a_career}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
 
+  # PostgreSQL Slave (Read Replica - Streaming Replication)
   slave:
-    container_name: postgres-career-slave
     image: postgres:16
+    container_name: postgres-career-slave
     restart: always
     environment:
-      POSTGRES_USER: ${DB_MASTER_USERNAME:-p2a_career_user}
-      POSTGRES_PASSWORD: ${DB_MASTER_PASSWORD:-P2aCareer!2025}
-      POSTGRES_DB: ${DB_MASTER_DATABASE:-p2a_career}
       PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_USER: ${DB_SLAVE_USERNAME:-p2a_career_user}
+      POSTGRES_PASSWORD: ${DB_SLAVE_PASSWORD:-Kx9mP2A2024MasterDB7nQ8vR3s}
+      POSTGRES_DB: ${DB_SLAVE_DATABASE:-p2a_career}
+    # ports:
+    #   - "5535:5432"
     volumes:
       - pg_slave_data:/var/lib/postgresql/data
       - ./postgres-career/slave/conf/postgresql.conf:/etc/postgresql/postgresql.conf:ro
       - ./postgres-career/slave/entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
-    ports:
-      - "5535:5432"
     depends_on:
-      - postgres-career-master
+      - master
     networks:
       - p2a-asean-network
     command: ["sh", "/usr/local/bin/entrypoint.sh"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h postgres-career-master -p 5432 -U ${DB_MASTER_USERNAME:-p2a_career_user} || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
 
+volumes:
+  pg_master_data:
+  pg_slave_data:
 
 networks:
   p2a-asean-network:
     name: p2a-asean-network
     external: true
-
-volumes:
-  pg_master_data:
-  pg_slave_data:
-  redis_career_data:
-    driver: local

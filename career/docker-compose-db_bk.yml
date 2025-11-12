@@ -1,0 +1,55 @@
+services:
+  master:
+    container_name: postgres-career-master
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-p2a_career_user}
+      POSTGRES_PASSWORD: ${DB_MASTER_PASSWORD:-P2aCareer!2025}
+      POSTGRES_DB: ${DB_MASTER_DATABASE:-p2a_career}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pg_master_data:/var/lib/postgresql/data
+      - ./postgres-career/master/conf/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgres-career/master/conf/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    command: >
+      postgres
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c hba_file=/etc/postgresql/pg_hba.conf
+    ports:
+      - "5534:5432"
+    networks:
+      - p2a-asean-network
+
+  slave:
+    container_name: postgres-career-slave
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_MASTER_USERNAME:-p2a_career_user}
+      POSTGRES_PASSWORD: ${DB_MASTER_PASSWORD:-P2aCareer!2025}
+      POSTGRES_DB: ${DB_MASTER_DATABASE:-p2a_career}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pg_slave_data:/var/lib/postgresql/data
+      - ./postgres-career/slave/conf/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgres-career/slave/entrypoint.sh:/usr/local/bin/entrypoint.sh:ro
+    ports:
+      - "5535:5432"
+    depends_on:
+      - master
+    networks:
+      - p2a-asean-network
+    command: ["sh", "/usr/local/bin/entrypoint.sh"]
+
+
+networks:
+  p2a-asean-network:
+    name: p2a-asean-network
+    external: true
+
+volumes:
+  pg_master_data:
+  pg_slave_data:
+  redis_career_data:
+    driver: local

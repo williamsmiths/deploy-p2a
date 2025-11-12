@@ -1,13 +1,13 @@
 services:
-  # P2A business System Application
-  p2a-business-system:
-    image: ghcr.io/williamsmiths/p2a-business:v1.0.3
-    container_name: p2a-business-system
+  # P2A Detect System Application
+  p2a-detech-cv-system:
+    image: ghcr.io/williamsmiths/detech-cv:v1.0.1
+    container_name: p2a-detech-cv-system
     restart: always
     env_file:
       - .env
     ports:
-      - "3004:3004"
+      - "3005:3005"
     volumes:
       - ./data/uploads:/app/uploads
       - ./data/logs:/app/logs
@@ -22,5 +22,6 @@ networks:
   p2a-asean-network:
     name: p2a-asean-network
     external: true
+    
 
 
