@@ -1,0 +1,61 @@
+services:
+  # P2A Core System Application
+  p2a-education-system:
+    # image: p2a-education-system:test
+    image: ghcr.io/williamsmiths/p2a-education:v1.2.0
+    container_name: p2a-education-system
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - REDIS_HOST=education-redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-redis}
+      - DB_MASTER_HOST=postgres-education-master
+      - DB_MASTER_PORT=5432
+      - DB_SLAVE_HOST=postgres-education-slave
+      - DB_SLAVE_PORT=5432
+    ports:
+      - "6002:3002"
+    volumes:
+      - ./data/uploads:/app/uploads
+      - ./data/logs:/app/logs
+    networks:
+      - p2a-asean-network
+    depends_on:
+      education-redis:
+        condition: service_healthy
+
+  education-redis:
+    image: redis:7-alpine
+    container_name: education-redis
+    restart: always
+    command: >
+      redis-server
+      --requirepass ${REDIS_PASSWORD:-redis}
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-redis}
+    ports:
+      - "6489:6379"
+    volumes:
+      - redis_education_data:/data
+    networks:
+      - p2a-asean-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis}", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  uploads_data:
+    driver: local
+  logs_data:
+    driver: local
+  redis_education_data:
+    driver: local
+
+networks:
+  p2a-asean-network:
+    name: p2a-asean-network
+    driver: bridge

@@ -10,9 +10,26 @@ services:
       - "3002:3002"
     volumes:
       - ./data/uploads:/app/uploads
-      - ./data/logs:/app/logs
+      - ./data/logs:/app/logs      
+      - ./resolv.conf:/etc/resolv.conf:ro
+    dns:
+      - 10.0.1.121
+      - 8.8.8.8
+      - 8.8.4.4
+      - 1.1.1.1
+    dns_search:
+      - .
+    dns_opt:
+      - timeout:2
+      - attempts:3
+      - ndots:0
+    sysctls:
+      - net.ipv4.ip_forward=1
     networks:
       - p2a-asean-network
+    # Đảm bảo container có quyền truy cập internet
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   uploads_data:
@@ -22,3 +39,6 @@ networks:
   p2a-asean-network:
     name: p2a-asean-network
     external: true
+    driver_opts:
+      com.docker.network.bridge.enable_icc: "true"
+      com.docker.network.bridge.enable_ip_masquerade: "true"
