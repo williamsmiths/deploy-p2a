@@ -1,0 +1,26 @@
+services:
+  # P2A social System Application
+  p2a-social:
+    image: ghcr.io/williamsmiths/p2a-social:v1.0.9
+    container_name: p2a-social
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "3006:3006"
+    volumes:
+      - ./data/uploads:/app/uploads
+      - ./data/logs:/app/logs
+    networks:
+      - p2a-asean-network
+
+volumes:
+  uploads_data:
+    driver: local
+
+networks:
+  p2a-asean-network:
+    name: p2a-asean-network
+    external: true
+
+

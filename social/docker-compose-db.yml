@@ -1,0 +1,41 @@
+services:
+  # PostgreSQL Master (Main DB)
+  master:
+    image: postgres:16
+    container_name: postgres-social-master
+    restart: always
+    environment:
+      POSTGRES_DB: ${DB_MASTER_DATABASE:-p2a_social}
+      POSTGRES_USER: ${DB_MASTER_USERNAME:-p2a_user}
+      POSTGRES_PASSWORD: ${DB_MASTER_PASSWORD:-p2a_social_password}
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5755:5432"
+    volumes:
+      - pg_master_data:/var/lib/postgresql/data
+      - ./postgres-social/master/conf/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgres-social/master/conf/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    command: >
+      postgres
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c hba_file=/etc/postgresql/pg_hba.conf
+    networks:
+      - p2a-asean-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_MASTER_USERNAME:-p2a_user} -d ${DB_MASTER_DATABASE:-p2a_social}"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+
+volumes:
+  pg_master_data:
+  redis_social_data:
+
+networks:
+  p2a-asean-network:
+    name: p2a-asean-network
+    external: true
+
+
