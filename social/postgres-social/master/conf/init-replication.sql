@@ -5,7 +5,7 @@ BEGIN
   IF NOT EXISTS (
     SELECT 1 FROM pg_roles WHERE rolname = 'replicator'
   ) THEN
-    CREATE ROLE replicator WITH REPLICATION LOGIN PASSWORD 'p2a_research_replicator';
+    CREATE ROLE replicator WITH REPLICATION LOGIN PASSWORD 'p2a_social_replicator';
   END IF;
 END;
 $$;
